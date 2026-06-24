@@ -19,6 +19,8 @@ void SequentialPatternMiner::fit(const std::vector<Sequence>&) { not_implemented
 
 std::vector<PatternSupport> SequentialPatternMiner::patterns() const { not_implemented(); }
 
+std::vector<PatternSupport> SequentialPatternMiner::closed_patterns() const { not_implemented(); }
+
 int SequentialPatternMiner::support_of(const Pattern&) const { not_implemented(); }
 
 std::vector<PatternSupport> SequentialPatternMiner::top_k(int) const { not_implemented(); }

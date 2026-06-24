@@ -58,6 +58,16 @@ class SequentialPatternMiner {
   // a successful fit.
   std::vector<PatternSupport> patterns() const;
 
+  // The closed frequent patterns. A frequent pattern P is closed iff there is
+  // no other frequent pattern Q such that P is a proper subsequence of Q and Q
+  // has the same support as P. (The sub-pattern relation here is the ordinary
+  // subsequence relation between patterns -- each itemset of P a subset of an
+  // itemset of Q at strictly increasing positions -- and does NOT use max_gap;
+  // max_gap only affects how support is counted against the database.) The
+  // order is unspecified. Throws std::logic_error if called before a successful
+  // fit.
+  std::vector<PatternSupport> closed_patterns() const;
+
   // Support of an arbitrary `pattern` under the fitted database: the number of
   // input sequences that contain it. The pattern need not be frequent; an
   // absent pattern has support 0. The empty pattern is contained in every

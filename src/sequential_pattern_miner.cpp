@@ -8,10 +8,11 @@ namespace {
 [[noreturn]] void not_implemented() { throw std::logic_error("not implemented"); }
 }  // namespace
 
-SequentialPatternMiner::SequentialPatternMiner(int min_support, int max_length)
-    : min_support_(min_support), max_length_(max_length) {
+SequentialPatternMiner::SequentialPatternMiner(int min_support, int max_length, int max_gap)
+    : min_support_(min_support), max_length_(max_length), max_gap_(max_gap) {
   if (min_support <= 0) throw std::invalid_argument("min_support must be positive");
   if (max_length < 0) throw std::invalid_argument("max_length must be non-negative");
+  if (max_gap < 0) throw std::invalid_argument("max_gap must be non-negative");
 }
 
 void SequentialPatternMiner::fit(const std::vector<Sequence>&) { not_implemented(); }

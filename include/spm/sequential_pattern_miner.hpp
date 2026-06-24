@@ -26,8 +26,20 @@ class SequentialPatternMiner {
   // of items summed over all of a pattern's itemsets. max_length == 0 means no
   // limit.
   //
-  // Throws std::invalid_argument if min_support <= 0 or max_length < 0.
-  explicit SequentialPatternMiner(int min_support, int max_length = 0);
+  // max_gap bounds how far apart consecutive itemsets of a pattern may be
+  // matched within a sequence. A pattern is contained in a sequence only if it
+  // can be matched at strictly increasing itemset positions j_1 < j_2 < ... <
+  // j_m (one per pattern itemset, each a subset of the sequence itemset at that
+  // position) such that every adjacent step satisfies j_{k+1} - j_k <= max_gap.
+  // max_gap == 0 means no limit (any increasing positions, identical to
+  // spm::contains); max_gap == 1 requires consecutive itemsets to be matched at
+  // adjacent positions. There is no gap constraint before the first itemset.
+  // The bound governs both mining and support_of.
+  //
+  // Throws std::invalid_argument if min_support <= 0, max_length < 0, or
+  // max_gap < 0.
+  explicit SequentialPatternMiner(int min_support, int max_length = 0,
+                                  int max_gap = 0);
 
   // Mines all frequent patterns from `database` and stores the result.
   //
@@ -68,6 +80,10 @@ class SequentialPatternMiner {
   // The configured maximum pattern length (0 means unlimited).
   int max_length() const { return max_length_; }
 
+  // The configured maximum gap between consecutive matched itemsets (0 means
+  // unlimited).
+  int max_gap() const { return max_gap_; }
+
   // Number of sequences in the fitted database. Throws std::logic_error if
   // called before a successful fit.
   int num_sequences() const;
@@ -79,6 +95,7 @@ class SequentialPatternMiner {
  private:
   int min_support_;
   int max_length_;
+  int max_gap_;
   bool fitted_ = false;
   std::vector<Sequence> database_;
   std::vector<PatternSupport> patterns_;

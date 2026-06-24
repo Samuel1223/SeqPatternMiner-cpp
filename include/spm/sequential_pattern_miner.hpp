@@ -36,10 +36,16 @@ class SequentialPatternMiner {
   // adjacent positions. There is no gap constraint before the first itemset.
   // The bound governs both mining and support_of.
   //
-  // Throws std::invalid_argument if min_support <= 0, max_length < 0, or
-  // max_gap < 0.
+  // max_total_gap bounds the TOTAL number of skipped (unmatched) itemsets
+  // summed across the whole match: the sum over consecutive matched pairs of
+  // (j_{k+1} - j_k - 1) must be <= max_total_gap. max_total_gap == 0 means no
+  // limit. A valid match must satisfy BOTH max_gap (every individual step) and
+  // max_total_gap (the match as a whole) simultaneously.
+  //
+  // Throws std::invalid_argument if min_support <= 0, max_length < 0,
+  // max_gap < 0, or max_total_gap < 0.
   explicit SequentialPatternMiner(int min_support, int max_length = 0,
-                                  int max_gap = 0);
+                                  int max_gap = 0, int max_total_gap = 0);
 
   // Mines all frequent patterns from `database` and stores the result.
   //
@@ -94,6 +100,10 @@ class SequentialPatternMiner {
   // unlimited).
   int max_gap() const { return max_gap_; }
 
+  // The configured maximum total skipped itemsets across a match (0 means
+  // unlimited).
+  int max_total_gap() const { return max_total_gap_; }
+
   // Number of sequences in the fitted database. Throws std::logic_error if
   // called before a successful fit.
   int num_sequences() const;
@@ -106,6 +116,7 @@ class SequentialPatternMiner {
   int min_support_;
   int max_length_;
   int max_gap_;
+  int max_total_gap_;
   bool fitted_ = false;
   std::vector<Sequence> database_;
   std::vector<PatternSupport> patterns_;

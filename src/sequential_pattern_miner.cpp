@@ -71,7 +71,7 @@ bool contains_within_gaps(const Sequence& seq, const Pattern& pattern, int max_g
   // best[j] = minimum total skipped itemsets to match pattern[0..k] ending at j.
   std::vector<int> best(n, INF);
   for (int j = 0; j < n; ++j) {
-    if (is_subset(pattern[0], seq[j])) { best[j] = 0; break; }  // no gap before the first itemset
+    if (is_subset(pattern[0], seq[j])) best[j] = 0;  // no gap before the first itemset
   }
 
   for (std::size_t k = 1; k < pattern.size(); ++k) {
@@ -82,7 +82,7 @@ bool contains_within_gaps(const Sequence& seq, const Pattern& pattern, int max_g
         if (best[prev] == INF) continue;
         const int dist = j - prev;
         if (!step_unbounded && dist > max_gap) continue;
-        const int total = best[prev] + dist;
+        const int total = best[prev] + (dist - 1);
         if (!total_unbounded && total > max_total_gap) continue;
         if (total < next[j]) next[j] = total;
       }
@@ -169,7 +169,7 @@ void SequentialPatternMiner::fit(const std::vector<Sequence>& database) {
       if (it <= last_item) continue;
       Pattern cand = base;
       cand.back().push_back(it);
-      if (!unbounded && total_items(cand) >= max_length_) continue;
+      if (!unbounded && total_items(cand) > max_length_) continue;
       int s = support(cand);
       if (s >= min_support_) {
         patterns_.push_back(PatternSupport{cand, s});
@@ -181,7 +181,7 @@ void SequentialPatternMiner::fit(const std::vector<Sequence>& database) {
     for (Item it : items) {
       Pattern cand = base;
       cand.push_back(Itemset{it});
-      if (!unbounded && total_items(cand) >= max_length_) continue;
+      if (!unbounded && total_items(cand) > max_length_) continue;
       int s = support(cand);
       if (s >= min_support_) {
         patterns_.push_back(PatternSupport{cand, s});
@@ -209,7 +209,7 @@ std::vector<PatternSupport> SequentialPatternMiner::closed_patterns() const {
   for (const PatternSupport& ps : patterns_) {
     bool closed = true;
     for (const PatternSupport& other : patterns_) {
-      if (other.support == ps.support && other.pattern.size() > ps.pattern.size() &&
+      if (other.support == ps.support && other.pattern != ps.pattern &&
           contains(other.pattern, ps.pattern)) {
         closed = false;
         break;
@@ -253,6 +253,11 @@ int SequentialPatternMiner::num_sequences() const {
 std::size_t SequentialPatternMiner::num_patterns() const {
   if (!fitted_) throw std::logic_error("miner is not fitted");
   return patterns_.size();
+}
+
+
+long long SequentialPatternMiner::count_matches(const Pattern&) const {
+  throw std::logic_error("not implemented");
 }
 
 }  // namespace spm

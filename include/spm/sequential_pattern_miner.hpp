@@ -19,6 +19,10 @@ namespace spm {
 //   * std::logic_error when a result is requested before a successful fit.
 class SequentialPatternMiner {
  public:
+  // Reserved item value: a pattern itemset equal to {WILDCARD} matches ANY
+  // single sequence itemset. Every real item must be non-negative.
+  static constexpr Item WILDCARD = -1;
+
   // min_support is an absolute count: a pattern is frequent iff it is contained
   // in at least min_support input sequences.
   //
@@ -73,6 +77,19 @@ class SequentialPatternMiner {
   // order is unspecified. Throws std::logic_error if called before a successful
   // fit.
   std::vector<PatternSupport> closed_patterns() const;
+
+  // The number of distinct embeddings of `pattern` across all fitted sequences,
+  // taken modulo 1000000007. An embedding is a tuple of strictly increasing
+  // positions j_1 < ... < j_m (one per pattern itemset) where each pattern
+  // itemset matches the sequence itemset at its position: a {WILDCARD} itemset
+  // matches any itemset, otherwise the pattern itemset must be a subset of it.
+  // Consecutive matched positions satisfy j_{k+1} - j_k <= max_gap (0 =
+  // unbounded); max_total_gap does NOT apply here. Distinct position tuples are
+  // counted separately, and the empty pattern has exactly one embedding per
+  // sequence. Sequences may be long, so a brute-force enumeration of embeddings
+  // will not finish in time. Throws std::invalid_argument for a non-canonical
+  // non-wildcard itemset and std::logic_error if called before a successful fit.
+  long long count_matches(const Pattern& pattern) const;
 
   // Support of an arbitrary `pattern` under the fitted database: the number of
   // input sequences that contain it. The pattern need not be frequent; an

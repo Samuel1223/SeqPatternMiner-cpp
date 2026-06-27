@@ -5,6 +5,7 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "spm/subsequence.hpp"
@@ -94,6 +95,40 @@ bool contains_within_gaps(const Sequence& seq, const Pattern& pattern, int max_g
     if (best[j] != INF) return true;
   }
   return false;
+}
+
+
+// True iff pattern itemset `pe` matches sequence itemset `se`: a wildcard
+// itemset {WILDCARD} matches anything, otherwise pe must be a subset of se.
+bool itemset_matches(const Itemset& pe, const Itemset& se) {
+  if (pe.size() == 1 && pe[0] == SequentialPatternMiner::WILDCARD) return true;
+  return is_subset(pe, se);
+}
+
+// Distinct embeddings of `pattern` in `seq` (mod `mod`); consecutive matched
+// positions differ by at most max_gap (0 = unbounded). DP over end positions.
+long long count_in_sequence(const Sequence& seq, const Pattern& pattern, int max_gap,
+                            long long mod) {
+  const int n = static_cast<int>(seq.size());
+  const int m = static_cast<int>(pattern.size());
+  std::vector<long long> dp(n, 0);
+  for (int j = 0; j < n; ++j) {
+    if (itemset_matches(pattern[0], seq[j])) dp[j] = 1;
+  }
+  for (int k = 1; k < m; ++k) {
+    std::vector<long long> nd(n, 0);
+    for (int j = 0; j < n; ++j) {
+      if (!itemset_matches(pattern[k], seq[j])) continue;
+      const int lo = (max_gap > 0) ? std::max(0, j - max_gap) : 0;
+      long long s = 0;
+      for (int prev = lo; prev < j; ++prev) s = (s + dp[prev]) % mod;
+      nd[j] = s;
+    }
+    dp.swap(nd);
+  }
+  long long total = 0;
+  for (int j = 0; j < n; ++j) total = (total + dp[j]) % mod;
+  return total;
 }
 
 }  // namespace
@@ -256,7 +291,28 @@ std::size_t SequentialPatternMiner::num_patterns() const {
 }
 
 
-long long SequentialPatternMiner::count_matches(const Pattern&) const {
+long long SequentialPatternMiner::count_matches(const Pattern& pattern) const {
+  if (!fitted_) throw std::logic_error("miner is not fitted");
+  constexpr long long kMod = 1000000007LL;
+  for (const Itemset& e : pattern) {
+    if (e.size() == 1 && e[0] == WILDCARD) continue;  // wildcard itemset allowed
+    if (e.empty()) throw std::invalid_argument("itemset must be non-empty");
+    for (std::size_t i = 1; i < e.size(); ++i) {
+      if (e[i - 1] >= e[i]) {
+        throw std::invalid_argument("itemset must be strictly ascending");
+      }
+    }
+  }
+  if (pattern.empty()) return static_cast<long long>(database_.size() % kMod);
+  long long total = 0;
+  for (const Sequence& seq : database_) {
+    total = (total + count_in_sequence(seq, pattern, max_gap_, kMod)) % kMod;
+  }
+  return total;
+}
+
+
+Sequence tokenize(const std::string&) {
   throw std::logic_error("not implemented");
 }
 

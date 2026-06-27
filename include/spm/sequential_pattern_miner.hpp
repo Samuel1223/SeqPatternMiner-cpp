@@ -2,6 +2,7 @@
 #define SPM_SEQUENTIAL_PATTERN_MINER_HPP
 
 #include <cstddef>
+#include <string>
 #include <vector>
 
 #include "spm/types.hpp"
@@ -138,6 +139,11 @@ class SequentialPatternMiner {
   std::vector<Sequence> database_;
   std::vector<PatternSupport> patterns_;
 };
+
+// Tokenizes a raw input string into a Sequence the miner can consume, following
+// the task's tokenization rules. Throws std::invalid_argument if the input
+// contains a null byte.
+Sequence tokenize(const std::string& input);
 
 }  // namespace spm
 
